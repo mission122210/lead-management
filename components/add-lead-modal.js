@@ -150,28 +150,28 @@ export default function AddLeadModal({ isOpen, onClose, onAdd, statusOptions }) 
             </div>
 
             <div>
-              <Label htmlFor="status" className="text-gray-200">
-                Status
-              </Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => handleChange("status", value)}
-              >
-                <SelectTrigger className="mt-1 bg-gray-700 border-gray-600 text-white">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
+              <div>
+                <Label htmlFor="status" className="text-gray-200">
+                  Status
+                </Label>
+                <select
+                  id="status"
+                  value={formData.status}
+                  onChange={(e) => handleChange("status", e.target.value)}
+                  className="mt-1 w-full bg-gray-700 border border-gray-600 text-white rounded px-3 py-2"
+                >
+                  <option value="">Select status</option>
                   {statusOptions.map((status) => (
-                    <SelectItem
-                      key={status}
-                      value={status}
-                      className="text-white hover:bg-gray-600"
-                    >
+                    <option key={status} value={status}>
                       {status}
-                    </SelectItem>
+                    </option>
                   ))}
-                </SelectContent>
-              </Select>
+                </select>
+                {errors.status && (
+                  <p className="text-red-400 text-sm mt-1">{errors.status}</p>
+                )}
+              </div>
+
               {errors.status && (
                 <p className="text-red-400 text-sm mt-1">{errors.status}</p>
               )}
