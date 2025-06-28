@@ -47,7 +47,7 @@ export default function AddLeadModal({ isOpen, onClose, onAdd, statusOptions }) 
 
     try {
       await addLead(formData)
-      onAdd(formData)
+      // onAdd(formData)
       setFormData({
         clientNumber: "",
         myNumber: "",
