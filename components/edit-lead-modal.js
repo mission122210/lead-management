@@ -123,18 +123,29 @@ export default function EditLeadModal({ isOpen, onClose, lead, statusOptions }) 
 
           <div>
             <Label htmlFor="status" className="text-gray-200">Status</Label>
-            <Select value={formData.status} onValueChange={(value) => handleChange("status", value)}>
-              <SelectTrigger className="mt-1 bg-gray-700 border-gray-600 text-white">
+            <Select
+              value={formData.status}
+              onValueChange={(value) => handleChange("status", value)}
+            >
+              <SelectTrigger
+                className="mt-1 bg-gray-700 border-gray-600 text-white"
+                onClick={(e) => e.stopPropagation()}  // Prevent modal close on clicking dropdown
+              >
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent className="bg-gray-700 border-gray-600">
                 {statusOptions.map((status) => (
-                  <SelectItem key={status} value={status} className="text-white hover:bg-gray-600">
+                  <SelectItem
+                    key={status}
+                    value={status}
+                    className="text-white hover:bg-gray-600"
+                  >
                     {status}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+
             {errors.status && <p className="text-red-400 text-sm mt-1">{errors.status}</p>}
           </div>
 
