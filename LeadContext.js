@@ -7,8 +7,8 @@ export function LeadProvider({ children }) {
     const [leads, setLeads] = useState([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
-    const host = "http://localhost:5000"
-    // const host = "https://lead-management-backend-two.vercel.app"
+    // const host = "http://localhost:5000"
+    const host = "https://lead-management-backend-two.vercel.app"
 
     // Fetch all leads from API
     const fetchLeads = async () => {
