@@ -5,13 +5,6 @@ import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useLead } from "@/LeadContext"
 
@@ -24,16 +17,27 @@ export default function AddLeadModal({ isOpen, onClose, onAdd, statusOptions }) 
     teamMember: "",
     status: "",
     remarks: "",
+    image: "", // base64 image string
   })
 
   const [errors, setErrors] = useState({})
   const [localError, setLocalError] = useState("")
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setFormData((prev) => ({ ...prev, image: reader.result }))
+    }
+    reader.readAsDataURL(file)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLocalError("")
 
-    // Validation
     const newErrors = {}
     if (!formData.clientNumber.trim()) newErrors.clientNumber = "Client number is required"
     if (!formData.myNumber.trim()) newErrors.myNumber = "Your number is required"
@@ -47,13 +51,13 @@ export default function AddLeadModal({ isOpen, onClose, onAdd, statusOptions }) 
 
     try {
       await addLead(formData)
-      // onAdd(formData)
       setFormData({
         clientNumber: "",
         myNumber: "",
         teamMember: "",
         status: "",
         remarks: "",
+        image: "",
       })
       setErrors({})
       onClose()
@@ -95,92 +99,33 @@ export default function AddLeadModal({ isOpen, onClose, onAdd, statusOptions }) 
           ) : null}
 
           <div className={loading ? "opacity-50 pointer-events-none" : ""}>
+            {/* Text Inputs */}
+            <InputBlock label="Client Number" field="clientNumber" value={formData.clientNumber} onChange={handleChange} error={errors.clientNumber} />
+            <InputBlock label="My Number" field="myNumber" value={formData.myNumber} onChange={handleChange} error={errors.myNumber} />
+            <InputBlock label="Team Member" field="teamMember" value={formData.teamMember} onChange={handleChange} error={errors.teamMember} />
+
+            {/* Status Dropdown */}
             <div>
-              <Label htmlFor="clientNumber" className="text-gray-200">
-                Client Number
-              </Label>
-              <Input
-                id="clientNumber"
-                value={formData.clientNumber}
-                onChange={(e) => handleChange("clientNumber", e.target.value)}
-                placeholder="+92-300-1234567"
-                className="mt-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-              />
-              {errors.clientNumber && (
-                <p className="text-red-400 text-sm mt-1">
-                  {errors.clientNumber}
-                </p>
-              )}
+              <Label htmlFor="status" className="text-gray-200">Status</Label>
+              <select
+                id="status"
+                value={formData.status}
+                onChange={(e) => handleChange("status", e.target.value)}
+                className="mt-1 w-full bg-gray-700 border border-gray-600 text-white rounded px-3 py-2"
+              >
+                <option value="">Select status</option>
+                {statusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+              {errors.status && <p className="text-red-400 text-sm mt-1">{errors.status}</p>}
             </div>
 
+            {/* Remarks */}
             <div>
-              <Label htmlFor="myNumber" className="text-gray-200">
-                My Number
-              </Label>
-              <Input
-                id="myNumber"
-                value={formData.myNumber}
-                onChange={(e) => handleChange("myNumber", e.target.value)}
-                placeholder="+92-301-9876543"
-                className="mt-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-              />
-              {errors.myNumber && (
-                <p className="text-red-400 text-sm mt-1">
-                  {errors.myNumber}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="teamMember" className="text-gray-200">
-                Team Member
-              </Label>
-              <Input
-                id="teamMember"
-                value={formData.teamMember}
-                onChange={(e) => handleChange("teamMember", e.target.value)}
-                placeholder="Enter team member name"
-                className="mt-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-              />
-              {errors.teamMember && (
-                <p className="text-red-400 text-sm mt-1">
-                  {errors.teamMember}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <div>
-                <Label htmlFor="status" className="text-gray-200">
-                  Status
-                </Label>
-                <select
-                  id="status"
-                  value={formData.status}
-                  onChange={(e) => handleChange("status", e.target.value)}
-                  className="mt-1 w-full bg-gray-700 border border-gray-600 text-white rounded px-3 py-2"
-                >
-                  <option value="">Select status</option>
-                  {statusOptions.map((status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
-                </select>
-                {errors.status && (
-                  <p className="text-red-400 text-sm mt-1">{errors.status}</p>
-                )}
-              </div>
-
-              {errors.status && (
-                <p className="text-red-400 text-sm mt-1">{errors.status}</p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="remarks" className="text-gray-200">
-                Remarks
-              </Label>
+              <Label htmlFor="remarks" className="text-gray-200">Remarks</Label>
               <Textarea
                 id="remarks"
                 value={formData.remarks}
@@ -188,6 +133,25 @@ export default function AddLeadModal({ isOpen, onClose, onAdd, statusOptions }) 
                 placeholder="Enter any remarks or notes..."
                 className="mt-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400 min-h-[80px]"
               />
+            </div>
+
+            {/* Image Upload */}
+            <div>
+              <Label htmlFor="image" className="text-gray-200">Upload Image</Label>
+              <Input
+                id="image"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="mt-1 text-white file:bg-gray-600 file:border-none file:px-3 file:py-1 file:text-white"
+              />
+              {formData.image && (
+                <img
+                  src={formData.image}
+                  alt="Preview"
+                  className="mt-2 rounded border border-gray-600 w-full max-h-40 object-contain"
+                />
+              )}
             </div>
           </div>
 
@@ -211,6 +175,23 @@ export default function AddLeadModal({ isOpen, onClose, onAdd, statusOptions }) 
           </div>
         </form>
       </div>
+    </div>
+  )
+}
+
+// ✅ Reusable input block
+function InputBlock({ label, field, value, onChange, error }) {
+  return (
+    <div>
+      <Label htmlFor={field} className="text-gray-200">{label}</Label>
+      <Input
+        id={field}
+        value={value}
+        onChange={(e) => onChange(field, e.target.value)}
+        placeholder={`Enter ${label.toLowerCase()}`}
+        className="mt-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+      />
+      {error && <p className="text-red-400 text-sm mt-1">{error}</p>}
     </div>
   )
 }
