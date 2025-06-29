@@ -152,7 +152,14 @@ export default function Dashboard() {
         </div>
 
         <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
-          <LeadTable leads={filteredLeads} onEdit={openEditModal} onDelete={openDeleteModal} loading={loading} error={error} />
+          <LeadTable
+            leads={filteredLeads}
+            loading={loading}
+            error={error}
+            onEdit={openEditModal}
+            onDelete={openDeleteModal}  // <-- pass delete modal opener here
+          />
+
         </div>
       </main>
 
