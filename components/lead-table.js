@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { useLead } from "@/LeadContext"
 
 const statusColors = {
   "On Training": "bg-blue-500/20 text-blue-400 border-blue-500/30",
@@ -22,7 +23,15 @@ const statusColors = {
   "Not Interested": "bg-gray-500/20 text-gray-400 border-gray-500/30",
 }
 
-export default function LeadTable({ leads, loading, error, onEdit, onDelete, deleteImage, uploadImageToLead }) {
+export default function LeadTable({ onEdit, leads }) {
+  const {
+    loading,
+    error,
+    deleteLead,
+    deleteImage,
+    uploadImageToLead,
+  } = useLead()
+
   const [modalImage, setModalImage] = useState(null)
   const [modalLeadId, setModalLeadId] = useState(null)
   const [uploadModalLeadId, setUploadModalLeadId] = useState(null)
@@ -98,7 +107,7 @@ export default function LeadTable({ leads, loading, error, onEdit, onDelete, del
     )
   }
 
-  if (!leads.length) {
+  if (leads.length === 0) {
     return (
       <div className="p-12 text-center">
         <div className="text-gray-400 text-lg mb-2">No leads found</div>
@@ -185,9 +194,8 @@ export default function LeadTable({ leads, loading, error, onEdit, onDelete, del
             {leads.map((lead, index) => (
               <tr
                 key={lead._id || index}
-                className={`border-b border-gray-700 hover:bg-gray-750 transition-colors ${
-                  index % 2 === 0 ? "bg-gray-800" : "bg-gray-800/50"
-                }`}
+                className={`border-b border-gray-700 hover:bg-gray-750 transition-colors ${index % 2 === 0 ? "bg-gray-800" : "bg-gray-800/50"
+                  }`}
               >
                 <td className="p-4">
                   {lead.imageUrl ? (
@@ -247,16 +255,14 @@ export default function LeadTable({ leads, loading, error, onEdit, onDelete, del
                       variant="ghost"
                       onClick={() => onEdit(lead)}
                       className="h-8 w-8 p-0 text-blue-400 hover:bg-blue-500/20"
-                      title="Edit Lead"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => onDelete(lead)}  // <-- open delete confirmation modal here
+                      onClick={() => deleteLead(lead._id)}
                       className="h-8 w-8 p-0 text-red-400 hover:bg-red-500/20"
-                      title="Delete Lead"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
