@@ -23,11 +23,10 @@ const statusColors = {
   "Not Interested": "bg-gray-500/20 text-gray-400 border-gray-500/30",
 }
 
-export default function LeadTable({ onEdit, leads }) {
+export default function LeadTable({ onEdit, leads, onDelete, setSelectedLead }) {
   const {
     loading,
     error,
-    deleteLead,
     deleteImage,
     uploadImageToLead,
   } = useLead()
@@ -59,6 +58,11 @@ export default function LeadTable({ onEdit, leads }) {
     } finally {
       setDeletingImage(false)
     }
+  }
+
+  const handleDeleteLead = (lead) => {
+    // No need to call setSelectedLead here
+    onDelete(lead)
   }
 
   const handleUploadImage = async (e) => {
@@ -261,7 +265,7 @@ export default function LeadTable({ onEdit, leads }) {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => deleteLead(lead._id)}
+                      onClick={() => handleDeleteLead(lead)}
                       className="h-8 w-8 p-0 text-red-400 hover:bg-red-500/20"
                     >
                       <Trash2 className="w-4 h-4" />

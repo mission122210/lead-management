@@ -157,7 +157,8 @@ export default function Dashboard() {
             loading={loading}
             error={error}
             onEdit={openEditModal}
-            onDelete={openDeleteModal}  // <-- pass delete modal opener here
+            onDelete={openDeleteModal}  // expects a lead argument
+            setSelectedLead={setSelectedLead}
           />
 
         </div>
