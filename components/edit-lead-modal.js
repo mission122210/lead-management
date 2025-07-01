@@ -5,9 +5,10 @@ import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useLead } from "@/LeadContext"
+
+const timezones = ["EST", "CST", "MST", "PST", "UTC"]
 
 export default function EditLeadModal({ isOpen, onClose, lead, statusOptions }) {
   const { updateLead } = useLead()
@@ -18,6 +19,11 @@ export default function EditLeadModal({ isOpen, onClose, lead, statusOptions }) 
     teamMember: "",
     status: "",
     remarks: "",
+  })
+  const [reminderData, setReminderData] = useState({
+    datetime: "",
+    timezone: "",
+    reason: "",
   })
 
   const [errors, setErrors] = useState({})
@@ -37,6 +43,10 @@ export default function EditLeadModal({ isOpen, onClose, lead, statusOptions }) 
       setSubmitError("")
     }
   }, [lead])
+
+  const handleReminderChange = (field, value) => {
+    setReminderData((prev) => ({ ...prev, [field]: value }))
+  }
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -63,7 +73,10 @@ export default function EditLeadModal({ isOpen, onClose, lead, statusOptions }) 
     setSubmitError("")
 
     try {
-      await updateLead(lead._id || lead.id, formData)
+      await updateLead(lead._id || lead.id, {
+        ...formData,
+        reminder: reminderData,
+      })
       onClose()
     } catch (err) {
       setSubmitError(err.message || "Failed to update lead")
@@ -153,6 +166,51 @@ export default function EditLeadModal({ isOpen, onClose, lead, statusOptions }) 
               placeholder="Enter any remarks or notes..."
               className="mt-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400 min-h-[80px]"
             />
+          </div>
+
+          <div className="border-t border-gray-700 pt-4 mt-4">
+            <h3 className="text-lg font-medium text-white mb-2">Set Reminder (Optional)</h3>
+
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="reminderDatetime" className="text-gray-200">Reminder Date & Time</Label>
+                <Input
+                  id="reminderDatetime"
+                  type="datetime-local"
+                  value={reminderData.datetime}
+                  onChange={(e) => handleReminderChange("datetime", e.target.value)}
+                  className="mt-1 bg-gray-700 border-gray-600 text-white"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="reminderTimezone" className="text-gray-200">Timezone</Label>
+                <select
+                  id="reminderTimezone"
+                  value={reminderData.timezone}
+                  onChange={(e) => handleReminderChange("timezone", e.target.value)}
+                  className="mt-1 w-full bg-gray-700 border border-gray-600 text-white rounded px-3 py-2"
+                >
+                  <option value="">Select timezone</option>
+                  {timezones.map((tz) => (
+                    <option key={tz} value={tz}>
+                      {tz}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="reminderReason" className="text-gray-200">Reminder Note</Label>
+                <Textarea
+                  id="reminderReason"
+                  value={reminderData.reason}
+                  onChange={(e) => handleReminderChange("reason", e.target.value)}
+                  placeholder="Why are you setting this reminder?"
+                  className="mt-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400 min-h-[60px]"
+                />
+              </div>
+            </div>
           </div>
 
           {submitError && <p className="text-red-400 text-sm">{submitError}</p>}

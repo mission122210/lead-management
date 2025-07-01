@@ -4,8 +4,6 @@ import React, { useState } from "react"
 import {
   Edit,
   Trash2,
-  Phone,
-  MessageCircle,
   Loader2,
   ImageIcon,
   Trash,
@@ -13,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useLead } from "@/LeadContext"
+import Reminder from './reminder/Index'
 
 const statusColors = {
   "On Training": "bg-blue-500/20 text-blue-400 border-blue-500/30",
@@ -82,15 +81,6 @@ export default function LeadTable({ onEdit, leads, onDelete, setSelectedLead }) 
       }
     }
     reader.readAsDataURL(file)
-  }
-
-  const handleWhatsAppClick = (number) => {
-    const clean = number.replace(/[^0-9]/g, "")
-    window.open(`https://wa.me/${clean}`, "_blank")
-  }
-
-  const handleCallClick = (number) => {
-    window.open(`tel:${number}`, "_self")
   }
 
   if (loading) {
@@ -218,29 +208,8 @@ export default function LeadTable({ onEdit, leads, onDelete, setSelectedLead }) 
                     />
                   )}
                 </td>
-                <td className="p-4">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-white font-medium">{lead.clientNumber}</span>
-                    <div className="flex space-x-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleCallClick(lead.clientNumber)}
-                        className="h-6 w-6 p-0 text-green-400 hover:bg-green-500/20"
-                      >
-                        <Phone className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleWhatsAppClick(lead.clientNumber)}
-                        className="h-6 w-6 p-0 text-green-400 hover:bg-green-500/20"
-                      >
-                        <MessageCircle className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
-                </td>
+                <Reminder lead={lead} />
+
                 <td className="p-4 text-gray-300">{lead.myNumber}</td>
                 <td className="p-4 text-white">{lead.teamMember}</td>
                 <td className="p-4">
