@@ -16,13 +16,20 @@ const ReminderBadge = ({ lead }) => {
     const [remainingTime, setRemainingTime] = useState("")
 
     const getTimeRemaining = (datetime, timezone) => {
-        const target = DateTime.fromISO(datetime, { zone: timezoneMap[timezone] || "UTC" })
-        const now = DateTime.now().setZone(timezoneMap[timezone] || "UTC")
+        const zone = timezoneMap[timezone] || "UTC"
 
-        const diff = target.diff(now, ["days", "hours", "minutes", "seconds"]).toObject()
+        // STEP 1: parse datetime as UTC
+        const targetUtc = DateTime.fromISO(datetime, { zone: "utc" })
 
+        // STEP 2: convert it to selected zone for display/comparison
+        const target = targetUtc.setZone(zone)
+
+        const now = DateTime.now().setZone(zone)
+
+        if (!target.isValid || !now.isValid) return "Invalid time"
         if (target <= now) return "Reminder time reached"
 
+        const diff = target.diff(now, ["days", "hours", "minutes", "seconds"]).toObject()
         const { days = 0, hours = 0, minutes = 0, seconds = 0 } = diff
 
         return `${days > 0 ? `${Math.floor(days)}d ` : ""}${hours > 0 ? `${Math.floor(hours)}h ` : ""}${Math.floor(minutes)}m ${Math.floor(seconds)}s`
@@ -31,32 +38,39 @@ const ReminderBadge = ({ lead }) => {
     useEffect(() => {
         if (!reminder?.datetime || !reminder?.timezone) return
 
-        const update = () => {
+        const updateTime = () => {
             const text = getTimeRemaining(reminder.datetime, reminder.timezone)
             setRemainingTime(text)
         }
 
-        update() // initial call
+        updateTime() // initial run
+        const intervalId = setInterval(updateTime, 1000)
 
-        const interval = setInterval(update, 1000)
-
-        return () => clearInterval(interval)
-    }, [reminder])
+        return () => clearInterval(intervalId)
+    }, [reminder?.datetime, reminder?.timezone])
 
     useEffect(() => {
         if (!reminder?.datetime || !reminder?.timezone) return
 
-        const target = DateTime.fromISO(reminder.datetime, { zone: timezoneMap[reminder.timezone] || "UTC" })
-        const now = DateTime.now()
-        const msDiff = target.toMillis() - now.toMillis()
+        const zone = timezoneMap[reminder.timezone] || "UTC"
 
+        // STEP 1: parse as UTC
+        const targetUtc = DateTime.fromISO(reminder.datetime, { zone: "utc" })
+
+        // STEP 2: convert to selected zone
+        const target = targetUtc.setZone(zone)
+        const now = DateTime.now().setZone(zone)
+
+        if (!target.isValid || !now.isValid) return
+
+        const msDiff = target.toMillis() - now.toMillis()
         if (msDiff <= 0) return
 
         if (Notification.permission !== "granted") {
             Notification.requestPermission()
         }
 
-        const timeout = setTimeout(() => {
+        const timeoutId = setTimeout(() => {
             if (Notification.permission === "granted") {
                 new Notification(`Reminder Alert for ${lead.teamMember}`, {
                     body: `Reminder for ${lead.clientNumber}`,
@@ -64,8 +78,9 @@ const ReminderBadge = ({ lead }) => {
             }
         }, msDiff)
 
-        return () => clearTimeout(timeout)
-    }, [reminder])
+        return () => clearTimeout(timeoutId)
+    }, [reminder?.datetime, reminder?.timezone])
+
 
     return (
         <td className="p-4">

@@ -10,6 +10,7 @@ import AddLeadModal from "@/components/add-lead-modal"
 import EditLeadModal from "@/components/edit-lead-modal"
 import DeleteConfirmModal from "@/components/delete-confirm-modal"
 import { useLead } from "@/LeadContext"
+import TimezoneClock from "@/components/TimezoneClock"
 
 const statusOptions = ["On Training", "On Deposit", "Blocked", "Opened", "Follow Up", "Not Interested"]
 
@@ -96,6 +97,19 @@ export default function Dashboard() {
       </header>
 
       <main className="p-6">
+
+
+
+        {/* USA Timezone Clocks */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <TimezoneClock timezone="America/New_York" label="Eastern Time (EST/EDT)" className="hover:bg-gray-750" />
+          <TimezoneClock timezone="America/Chicago" label="Central Time (CST/CDT)" className="hover:bg-gray-750" />
+          <TimezoneClock timezone="America/Los_Angeles" label="Pacific Time (PST/PDT)" className="hover:bg-gray-750" />
+        </div>
+
+
+
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
             <h3 className="text-sm font-medium text-gray-400">Total Leads</h3>
