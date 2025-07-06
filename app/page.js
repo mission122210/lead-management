@@ -165,6 +165,7 @@ export default function Dashboard() {
           </div>
         </div>
 
+        <div>{filteredLeads.length} clients in backup</div>
         <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
           <LeadTable
             leads={filteredLeads}
