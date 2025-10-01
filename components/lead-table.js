@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import {
   Edit,
   Trash2,
@@ -36,6 +36,9 @@ export default function LeadTable({ onEdit, leads, onDelete, setSelectedLead }) 
   const [deletingImage, setDeletingImage] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
 
+  // Ref to the upload modal container for paste listening
+  const uploadModalRef = useRef(null)
+
   const openImageModal = (url, id) => {
     setModalImage(url)
     setModalLeadId(id)
@@ -60,28 +63,71 @@ export default function LeadTable({ onEdit, leads, onDelete, setSelectedLead }) 
   }
 
   const handleDeleteLead = (lead) => {
-    // No need to call setSelectedLead here
     onDelete(lead)
   }
 
-  const handleUploadImage = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file || !uploadModalLeadId) return
+  const handleUploadImage = async (fileOrBase64) => {
+    if (!fileOrBase64 || !uploadModalLeadId) return
 
-    const reader = new FileReader()
-    reader.onloadend = async () => {
-      setUploadingImage(true)
-      try {
-        await uploadImageToLead(uploadModalLeadId, reader.result)
+    setUploadingImage(true)
+    try {
+      // if fileOrBase64 is File, read as base64, else assume it's base64 string
+      if (fileOrBase64 instanceof File) {
+        const reader = new FileReader()
+        reader.onloadend = async () => {
+          await uploadImageToLead(uploadModalLeadId, reader.result)
+          setUploadModalLeadId(null)
+          setUploadingImage(false)
+        }
+        reader.readAsDataURL(fileOrBase64)
+      } else {
+        await uploadImageToLead(uploadModalLeadId, fileOrBase64)
         setUploadModalLeadId(null)
-      } catch {
-        alert("Failed to upload image")
-      } finally {
         setUploadingImage(false)
       }
+    } catch {
+      alert("Failed to upload image")
+      setUploadingImage(false)
     }
-    reader.readAsDataURL(file)
   }
+
+  const onFileInputChange = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      handleUploadImage(file)
+    }
+  }
+
+  // Clipboard paste handler inside the upload modal
+  useEffect(() => {
+    if (!uploadModalLeadId) return // Only active when upload modal is open
+
+    const onPaste = (e) => {
+      const items = e.clipboardData.items
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i]
+        if (item.type.indexOf("image") !== -1) {
+          const blob = item.getAsFile()
+          if (blob) {
+            e.preventDefault()
+            handleUploadImage(blob)
+            break
+          }
+        }
+      }
+    }
+
+    const currentModal = uploadModalRef.current
+    if (currentModal) {
+      currentModal.addEventListener("paste", onPaste)
+    }
+
+    return () => {
+      if (currentModal) {
+        currentModal.removeEventListener("paste", onPaste)
+      }
+    }
+  }, [uploadModalLeadId])
 
   if (loading) {
     return (
@@ -144,18 +190,25 @@ export default function LeadTable({ onEdit, leads, onDelete, setSelectedLead }) 
         </div>
       )}
 
-      {/* Upload Image Modal */}
+      {/* Upload Image Modal with clipboard paste support */}
       {uploadModalLeadId && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+        <div
+          ref={uploadModalRef}
+          tabIndex={0} // Make div focusable for paste events
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
+        >
           <div className="bg-white rounded-lg p-6 w-80 space-y-4 text-center">
             <h2 className="text-lg font-semibold">Upload Image</h2>
             <input
               type="file"
               accept="image/*"
-              onChange={handleUploadImage}
+              onChange={onFileInputChange}
               disabled={uploadingImage}
               className="w-full"
             />
+            <p className="text-sm text-gray-500 mt-2">
+              Or paste an image (Ctrl+V) directly here
+            </p>
             <div className="flex justify-end space-x-2">
               <Button
                 variant="outline"
@@ -188,8 +241,9 @@ export default function LeadTable({ onEdit, leads, onDelete, setSelectedLead }) 
             {leads.map((lead, index) => (
               <tr
                 key={lead._id || index}
-                className={`border-b border-gray-700 hover:bg-gray-750 transition-colors ${index % 2 === 0 ? "bg-gray-800" : "bg-gray-800/50"
-                  }`}
+                className={`border-b border-gray-700 hover:bg-gray-750 transition-colors ${
+                  index % 2 === 0 ? "bg-gray-800" : "bg-gray-800/50"
+                }`}
               >
                 <td className="p-4">
                   {lead.imageUrl ? (

@@ -1,6 +1,6 @@
 "use client"
 
-import { useContext, useState } from "react"
+import { useContext, useState, useEffect, useRef } from "react"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,6 +23,8 @@ export default function AddLeadModal({ isOpen, onClose, onAdd, statusOptions }) 
   const [errors, setErrors] = useState({})
   const [localError, setLocalError] = useState("")
 
+  const imageInputRef = useRef(null) // Ref for the image upload div
+
   const handleImageChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -33,6 +35,39 @@ export default function AddLeadModal({ isOpen, onClose, onAdd, statusOptions }) 
     }
     reader.readAsDataURL(file)
   }
+
+  // Clipboard paste handler for the image upload block
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handlePaste = (e) => {
+      const clipboardItems = e.clipboardData.items
+      for (let i = 0; i < clipboardItems.length; i++) {
+        const item = clipboardItems[i]
+        if (item.type.indexOf("image") !== -1) {
+          const blob = item.getAsFile()
+          const reader = new FileReader()
+          reader.onloadend = () => {
+            setFormData((prev) => ({ ...prev, image: reader.result }))
+          }
+          reader.readAsDataURL(blob)
+          e.preventDefault()
+          break
+        }
+      }
+    }
+
+    const el = imageInputRef.current
+    if (el) {
+      el.addEventListener("paste", handlePaste)
+    }
+
+    return () => {
+      if (el) {
+        el.removeEventListener("paste", handlePaste)
+      }
+    }
+  }, [isOpen])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -135,8 +170,12 @@ export default function AddLeadModal({ isOpen, onClose, onAdd, statusOptions }) 
               />
             </div>
 
-            {/* Image Upload */}
-            <div>
+            {/* Image Upload with Clipboard Paste Support */}
+            <div
+              ref={imageInputRef}
+              tabIndex={0} // Make div focusable to capture paste events
+              className="focus:outline-none"
+            >
               <Label htmlFor="image" className="text-gray-200">Upload Image</Label>
               <Input
                 id="image"

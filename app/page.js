@@ -33,12 +33,19 @@ export default function Dashboard() {
     let filtered = leads
 
     if (searchTerm) {
-      filtered = filtered.filter(
-        (lead) =>
-          lead.clientNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          lead.teamMember.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          lead.remarks.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      const lowerSearch = searchTerm.toLowerCase()
+
+      filtered = filtered.filter((lead) => {
+        // format date as locale string, e.g. "10/1/2025"
+        const dateString = new Date(lead.createdAt || lead.date).toLocaleDateString()
+
+        return (
+          lead.clientNumber.toLowerCase().includes(lowerSearch) ||
+          lead.teamMember.toLowerCase().includes(lowerSearch) ||
+          lead.remarks.toLowerCase().includes(lowerSearch) ||
+          dateString.includes(searchTerm) // date ko bina lower case ke check karen kyun ke date string mein alphabets nahi hain
+        )
+      })
     }
 
     if (statusFilter !== "all") {
@@ -106,8 +113,6 @@ export default function Dashboard() {
           <TimezoneClock timezone="America/Chicago" label="Central Time (CST/CDT)" className="hover:bg-gray-750" />
           <TimezoneClock timezone="America/Los_Angeles" label="Pacific Time (PST/PDT)" className="hover:bg-gray-750" />
         </div>
-
-
 
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
