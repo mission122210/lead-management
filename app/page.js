@@ -9,14 +9,18 @@ import LeadTable from "@/components/lead-table"
 import AddLeadModal from "@/components/add-lead-modal"
 import EditLeadModal from "@/components/edit-lead-modal"
 import DeleteConfirmModal from "@/components/delete-confirm-modal"
-import { useLead } from "@/LeadContext"
 import TimezoneClock from "@/components/TimezoneClock"
+import { LeadProvider, useLead } from "@/LeadContext"
 
 const statusOptions = ["On Training", "On Deposit", "Blocked", "Opened", "Follow Up", "Not Interested"]
 
-export default function Dashboard() {
-  const { leads, loading, error, addLead, fetchLeads } = useLead()
+function DashboardContent() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [passwordInput, setPasswordInput] = useState("")
+  const [passwordError, setPasswordError] = useState("")
+  const [apiHost, setApiHost] = useState("")
 
+  const { leads, loading, error, addLead, fetchLeads } = useLead()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [filteredLeads, setFilteredLeads] = useState([])
@@ -26,8 +30,10 @@ export default function Dashboard() {
   const [selectedLead, setSelectedLead] = useState(null)
 
   useEffect(() => {
-    fetchLeads()
-  }, [])
+    if (isAuthenticated) {
+      fetchLeads()
+    }
+  }, [isAuthenticated])
 
   useEffect(() => {
     let filtered = leads
@@ -36,14 +42,13 @@ export default function Dashboard() {
       const lowerSearch = searchTerm.toLowerCase()
 
       filtered = filtered.filter((lead) => {
-        // format date as locale string, e.g. "10/1/2025"
         const dateString = new Date(lead.createdAt || lead.date).toLocaleDateString()
 
         return (
           lead.clientNumber.toLowerCase().includes(lowerSearch) ||
           lead.teamMember.toLowerCase().includes(lowerSearch) ||
           lead.remarks.toLowerCase().includes(lowerSearch) ||
-          dateString.includes(searchTerm) // date ko bina lower case ke check karen kyun ke date string mein alphabets nahi hain
+          dateString.includes(searchTerm)
         )
       })
     }
@@ -55,19 +60,39 @@ export default function Dashboard() {
     setFilteredLeads(filtered)
   }, [leads, searchTerm, statusFilter])
 
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault()
+
+    let selectedHost = ""
+
+    if (passwordInput === "Master122") {
+      selectedHost = "https://lead-management-backend-master.vercel.app"
+    } else if (passwordInput === "Ramish107") {
+      selectedHost = "https://ramishleadbackend.vercel.app"
+    } else if (passwordInput === "Jutt113") {
+      selectedHost = "https://juttleadbackend.vercel.app"
+    } else {
+      setPasswordError("Invalid password. Please try again.")
+      setPasswordInput("")
+      return
+    }
+
+    setApiHost(selectedHost)
+    setIsAuthenticated(true)
+    setPasswordError("")
+  }
+
   const handleAddLead = async (newLead) => {
     await addLead(newLead)
     setIsAddModalOpen(false)
   }
 
   const handleEditLead = (updatedLead) => {
-    // Implement API call to update lead if needed
     setIsEditModalOpen(false)
     setSelectedLead(null)
   }
 
   const handleDeleteLead = () => {
-    // Implement API call to delete lead if needed
     setIsDeleteModalOpen(false)
     setSelectedLead(null)
   }
@@ -82,6 +107,33 @@ export default function Dashboard() {
     setIsDeleteModalOpen(true)
   }
 
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="bg-gray-800 p-8 rounded-lg border border-gray-700 w-full max-w-md">
+          <h2 className="text-2xl font-bold text-white mb-6 text-center">Lead Management System</h2>
+          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Enter Password</label>
+              <Input
+                type="password"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                placeholder="Enter your password"
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                autoFocus
+              />
+              {passwordError && <p className="text-red-400 text-sm mt-2">{passwordError}</p>}
+            </div>
+            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+              Access Dashboard
+            </Button>
+          </form>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
       <header className="bg-gray-800 border-b border-gray-700 px-6 py-4">
@@ -91,11 +143,19 @@ export default function Dashboard() {
             <p className="text-gray-400 mt-1">Manage your client leads efficiently</p>
           </div>
           <div className="flex items-center space-x-3">
-            <Button variant="outline" size="sm" className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-transparent">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-transparent"
+            >
               <Upload className="w-4 h-4 mr-2" />
               Import
             </Button>
-            <Button variant="outline" size="sm" className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-transparent">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-gray-600 text-gray-300 hover:bg-gray-700 bg-transparent"
+            >
               <Download className="w-4 h-4 mr-2" />
               Export
             </Button>
@@ -104,16 +164,11 @@ export default function Dashboard() {
       </header>
 
       <main className="p-6">
-
-
-
-        {/* USA Timezone Clocks */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <TimezoneClock timezone="America/New_York" label="Eastern Time (EST/EDT)" className="hover:bg-gray-750" />
           <TimezoneClock timezone="America/Chicago" label="Central Time (CST/CDT)" className="hover:bg-gray-750" />
           <TimezoneClock timezone="America/Los_Angeles" label="Pacific Time (PST/PDT)" className="hover:bg-gray-750" />
         </div>
-
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
@@ -122,15 +177,21 @@ export default function Dashboard() {
           </div>
           <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
             <h3 className="text-sm font-medium text-gray-400">On Training</h3>
-            <p className="text-3xl font-bold text-blue-400 mt-2">{leads.filter((lead) => lead.status === "On Training").length}</p>
+            <p className="text-3xl font-bold text-blue-400 mt-2">
+              {leads.filter((lead) => lead.status === "On Training").length}
+            </p>
           </div>
           <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
             <h3 className="text-sm font-medium text-gray-400">On Deposit</h3>
-            <p className="text-3xl font-bold text-green-400 mt-2">{leads.filter((lead) => lead.status === "On Deposit").length}</p>
+            <p className="text-3xl font-bold text-green-400 mt-2">
+              {leads.filter((lead) => lead.status === "On Deposit").length}
+            </p>
           </div>
           <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
             <h3 className="text-sm font-medium text-gray-400">Opened</h3>
-            <p className="text-3xl font-bold text-purple-400 mt-2">{leads.filter((lead) => lead.status === "Opened").length}</p>
+            <p className="text-3xl font-bold text-purple-400 mt-2">
+              {leads.filter((lead) => lead.status === "Opened").length}
+            </p>
           </div>
         </div>
 
@@ -177,10 +238,9 @@ export default function Dashboard() {
             loading={loading}
             error={error}
             onEdit={openEditModal}
-            onDelete={openDeleteModal}  // expects a lead argument
+            onDelete={openDeleteModal}
             setSelectedLead={setSelectedLead}
           />
-
         </div>
       </main>
 
@@ -209,9 +269,71 @@ export default function Dashboard() {
           setSelectedLead(null)
         }}
         onDelete={handleDeleteLead}
-        leadId={selectedLead?._id}              // ✅ Add this line
+        leadId={selectedLead?._id}
         leadClientNumber={selectedLead?.clientNumber}
       />
     </div>
+  )
+}
+
+export default function Dashboard() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [passwordInput, setPasswordInput] = useState("")
+  const [passwordError, setPasswordError] = useState("")
+  const [apiHost, setApiHost] = useState("")
+
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault()
+
+    let selectedHost = ""
+
+    if (passwordInput === "Master122") {
+      selectedHost = "https://lead-management-backend-master.vercel.app"
+    } else if (passwordInput === "Ramish107") {
+      selectedHost = "https://ramishleadbackend.vercel.app"
+    } else if (passwordInput === "Jutt113") {
+      selectedHost = "https://juttleadbackend.vercel.app"
+    } else {
+      setPasswordError("Invalid password. Please try again.")
+      setPasswordInput("")
+      return
+    }
+
+    setApiHost(selectedHost)
+    setIsAuthenticated(true)
+    setPasswordError("")
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="bg-gray-800 p-8 rounded-lg border border-gray-700 w-full max-w-md">
+          <h2 className="text-2xl font-bold text-white mb-6 text-center">Lead Management System</h2>
+          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Enter Password</label>
+              <Input
+                type="password"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                placeholder="Enter your password"
+                className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                autoFocus
+              />
+              {passwordError && <p className="text-red-400 text-sm mt-2">{passwordError}</p>}
+            </div>
+            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+              Access Dashboard
+            </Button>
+          </form>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <LeadProvider apiHost={apiHost}>
+      <DashboardContent />
+    </LeadProvider>
   )
 }
