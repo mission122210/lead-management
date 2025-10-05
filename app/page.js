@@ -11,6 +11,7 @@ import EditLeadModal from "@/components/edit-lead-modal"
 import DeleteConfirmModal from "@/components/delete-confirm-modal"
 import TimezoneClock from "@/components/TimezoneClock"
 import { LeadProvider, useLead } from "@/LeadContext"
+import TeamPerformance from "@/components/team-performance"
 
 const statusOptions = ["On Training", "On Deposit", "Blocked", "Opened", "Follow Up", "Not Interested"]
 
@@ -194,6 +195,8 @@ function DashboardContent() {
             </p>
           </div>
         </div>
+
+        <TeamPerformance leads={leads} />
 
         <div className="bg-gray-800 p-6 rounded-lg border border-gray-700 mb-6">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
