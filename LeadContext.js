@@ -7,13 +7,21 @@ export function LeadProvider({ children, apiHost }) {
   const [leads, setLeads] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [currentMonth, setCurrentMonth] = useState(
+    new Date().toLocaleString('default', { month: 'long' }) // Get current month name
+  )
   const host = apiHost || "https://lead-management-backend-master.vercel.app"
 
   const fetchLeads = async () => {
     setLoading(true)
-    setError(null)
+    setError(null) 
     try {
-      const res = await fetch(`${host}/api/leads/fetchLeads`)
+      // If a month is selected, append it as a query parameter
+      const url = currentMonth
+        ? `${host}/api/leads/fetchLeads?month=${currentMonth}`
+        : `${host}/api/leads/fetchLeads`
+
+      const res = await fetch(url)
       if (!res.ok) throw new Error("Failed to fetch leads")
       const data = await res.json()
       setLeads(data)
@@ -82,21 +90,18 @@ export function LeadProvider({ children, apiHost }) {
     }
   }
 
-  // New: delete image from lead
   const deleteImage = async (leadId) => {
     try {
       const res = await fetch(`${host}/api/leads/deleteLeadImage/${leadId}`, {
         method: "DELETE",
       })
       if (!res.ok) throw new Error("Failed to delete image")
-      // Refresh leads after deleting image
       await fetchLeads()
     } catch (err) {
       throw err
     }
   }
 
-  // Upload image to existing lead
   const uploadImageToLead = async (leadId, base64Image) => {
     try {
       const res = await fetch(`${host}/api/leads/uploadImage/${leadId}`, {
@@ -113,9 +118,10 @@ export function LeadProvider({ children, apiHost }) {
     }
   }
 
+  // New: Trigger the fetchLeads whenever the month state changes
   useEffect(() => {
     fetchLeads()
-  }, [])
+  }, [currentMonth])  // Dependencies on month
 
   return (
     <LeadContext.Provider
@@ -129,6 +135,8 @@ export function LeadProvider({ children, apiHost }) {
         deleteLead,
         deleteImage,
         uploadImageToLead,
+        setCurrentMonth,
+        currentMonth
       }}
     >
       {children}

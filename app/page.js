@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Search, Filter, Download, Upload } from "lucide-react"
+import { Plus, Search, Filter, Download, Upload, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -13,7 +13,14 @@ import TimezoneClock from "@/components/TimezoneClock"
 import { LeadProvider, useLead } from "@/LeadContext"
 import TeamPerformance from "@/components/team-performance"
 
+// Status options
 const statusOptions = ["On Training", "On Deposit", "Blocked", "Opened", "Follow Up", "Not Interested"]
+
+// Month options (January - December)
+const months = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+]
 
 function DashboardContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -21,7 +28,8 @@ function DashboardContent() {
   const [passwordError, setPasswordError] = useState("")
   const [apiHost, setApiHost] = useState("")
 
-  const { leads, loading, error, addLead, fetchLeads } = useLead()
+
+  const { leads, loading, error, addLead, fetchLeads, setCurrentMonth, currentMonth } = useLead()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [filteredLeads, setFilteredLeads] = useState([])
@@ -67,7 +75,7 @@ function DashboardContent() {
     let selectedHost = ""
 
     if (passwordInput === "Master122") {
-      selectedHost = "https://lead-management-backend-master.vercel.app"
+      selectedHost = "https://lead-management-backend-master.vercel.ap"
     } else if (passwordInput === "Ramish107") {
       selectedHost = "https://ramishleadbackend.vercel.app"
     } else if (passwordInput === "Jutt113") {
@@ -222,6 +230,20 @@ function DashboardContent() {
                   {statusOptions.map((status) => (
                     <SelectItem key={status} value={status} className="text-white hover:bg-gray-600">
                       {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {/* Month dropdown */}
+              <Select value={currentMonth} onValueChange={setCurrentMonth}>
+                <SelectTrigger className="w-48 bg-gray-700 border-gray-600 text-white">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Filter by month" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  {months.map((month, index) => (
+                    <SelectItem key={index} value={month} className="text-white hover:bg-gray-600">
+                      {month}
                     </SelectItem>
                   ))}
                 </SelectContent>
