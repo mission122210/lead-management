@@ -10,7 +10,7 @@ export function LeadProvider({ children, apiHost }) {
   const [currentMonth, setCurrentMonth] = useState(
     new Date().toLocaleString('default', { month: 'long' }) // Get current month name
   )
-  const host = apiHost || "https://lead-management-backend-master.vercel.app"
+  const host = apiHost || "https://lead-management-backend-master1.vercel.app/"
 
   const fetchLeads = async () => {
     setLoading(true)

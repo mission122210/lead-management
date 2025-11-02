@@ -75,11 +75,11 @@ function DashboardContent() {
     let selectedHost = ""
 
     if (passwordInput === "Master122") {
-      selectedHost = "https://lead-management-backend-master.vercel.ap"
+      selectedHost = "https://lead-management-backend-master1.vercel.app/"
     } else if (passwordInput === "Ramish107") {
-      selectedHost = "https://ramishleadbackend.vercel.app"
+      selectedHost = "https://ramish-lead-backkend1.vercel.app/"
     } else if (passwordInput === "Jutt113") {
-      selectedHost = "https://juttleadbackend.vercel.app"
+      selectedHost = "https://jutt-lead-backend1.vercel.app/"
     } else {
       setPasswordError("Invalid password. Please try again.")
       setPasswordInput("")
