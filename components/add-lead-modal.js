@@ -1,7 +1,7 @@
 "use client"
 
 import { useContext, useState, useEffect, useRef } from "react"
-import { X } from "lucide-react"
+import { X } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,8 +22,97 @@ export default function AddLeadModal({ isOpen, onClose, onAdd, statusOptions }) 
 
   const [errors, setErrors] = useState({})
   const [localError, setLocalError] = useState("")
+  const [extracting, setExtracting] = useState(false) // Track OCR extraction status
 
   const imageInputRef = useRef(null) // Ref for the image upload div
+
+  const extractTextFromImage = async (base64Image) => {
+    try {
+      setExtracting(true)
+      
+      // Create image element from base64
+      const img = new Image()
+      img.onload = async () => {
+        // Create canvas and draw image
+        const canvas = document.createElement("canvas")
+        canvas.width = img.width
+        canvas.height = img.height
+        const ctx = canvas.getContext("2d")
+        ctx.drawImage(img, 0, 0)
+
+        // Get image data and perform simple OCR-like text detection
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        
+        // Use Tesseract.js for OCR
+        if (typeof window !== "undefined" && !window.Tesseract) {
+          // Dynamically load Tesseract if not already loaded
+          const script = document.createElement("script")
+          script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5"
+          script.onload = async () => {
+            await performOCR(canvas)
+          }
+          document.head.appendChild(script)
+        } else if (window.Tesseract) {
+          await performOCR(canvas)
+        }
+      }
+      img.src = base64Image
+    } catch (err) {
+      console.error("Error extracting text from image:", err)
+      setExtracting(false)
+    }
+  }
+
+  const performOCR = async (canvas) => {
+    try {
+      const { Tesseract } = window
+      const worker = await Tesseract.createWorker()
+      const result = await worker.recognize(canvas)
+      const text = result.data.text
+
+      // Search for "Training" keyword (case-insensitive)
+      const trainingMatch = text.match(/training[^\n]*/i)
+      if (trainingMatch) {
+        const extractedNumber = trainingMatch[0].trim()
+        setFormData((prev) => ({
+          ...prev,
+          clientNumber: extractedNumber,
+        }))
+      }
+
+      // Extract name from top-left area of image
+      // Get first few lines of text and extract the first word/name
+      const lines = text.split('\n').filter(line => line.trim().length > 0)
+      if (lines.length > 0) {
+        // Take the first non-empty line as the name (usually from top-left)
+        let firstLine = lines[0].trim()
+        
+        firstLine = firstLine.replace(/\bReply\b/gi, '').trim()
+        
+        // Extract just the first word or meaningful name
+        const nameMatch = firstLine.match(/^[\w\s]+/i)
+        if (nameMatch) {
+          let extractedName = nameMatch[0].trim()
+          extractedName = extractedName.replace(/\s+/g, ' ').trim()
+          
+          extractedName = extractedName.charAt(0).toUpperCase() + extractedName.slice(1)
+          
+          if (extractedName) {
+            setFormData((prev) => ({
+              ...prev,
+              teamMember: extractedName,
+            }))
+          }
+        }
+      }
+
+      await worker.terminate()
+      setExtracting(false)
+    } catch (err) {
+      console.error("Error during OCR:", err)
+      setExtracting(false)
+    }
+  }
 
   const handleImageChange = (e) => {
     const file = e.target.files[0]
@@ -32,11 +121,11 @@ export default function AddLeadModal({ isOpen, onClose, onAdd, statusOptions }) 
     const reader = new FileReader()
     reader.onloadend = () => {
       setFormData((prev) => ({ ...prev, image: reader.result }))
+      extractTextFromImage(reader.result)
     }
     reader.readAsDataURL(file)
   }
 
-  // Clipboard paste handler for the image upload block
   useEffect(() => {
     if (!isOpen) return
 
@@ -49,6 +138,7 @@ export default function AddLeadModal({ isOpen, onClose, onAdd, statusOptions }) 
           const reader = new FileReader()
           reader.onloadend = () => {
             setFormData((prev) => ({ ...prev, image: reader.result }))
+            extractTextFromImage(reader.result)
           }
           reader.readAsDataURL(blob)
           e.preventDefault()
@@ -133,9 +223,12 @@ export default function AddLeadModal({ isOpen, onClose, onAdd, statusOptions }) 
             </p>
           ) : null}
 
-          <div className={loading ? "opacity-50 pointer-events-none" : ""}>
+          <div className={loading || extracting ? "opacity-50 pointer-events-none" : ""}>
             {/* Text Inputs */}
             <InputBlock label="Client Number" field="clientNumber" value={formData.clientNumber} onChange={handleChange} error={errors.clientNumber} />
+            {extracting && (
+              <p className="text-blue-400 text-sm mt-1">Extracting information from image...</p>
+            )}
             <InputBlock label="My Number" field="myNumber" value={formData.myNumber} onChange={handleChange} error={errors.myNumber} />
             <InputBlock label="Team Member" field="teamMember" value={formData.teamMember} onChange={handleChange} error={errors.teamMember} />
 
@@ -183,10 +276,11 @@ export default function AddLeadModal({ isOpen, onClose, onAdd, statusOptions }) 
                 accept="image/*"
                 onChange={handleImageChange}
                 className="mt-1 text-white file:bg-gray-600 file:border-none file:px-3 file:py-1 file:text-white"
+                disabled={extracting}
               />
               {formData.image && (
                 <img
-                  src={formData.image}
+                  src={formData.image || "/placeholder.svg"}
                   alt="Preview"
                   className="mt-2 rounded border border-gray-600 w-full max-h-40 object-contain"
                 />
@@ -199,14 +293,14 @@ export default function AddLeadModal({ isOpen, onClose, onAdd, statusOptions }) 
               type="button"
               variant="outline"
               onClick={onClose}
-              disabled={loading}
+              disabled={loading || extracting}
               className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700 bg-transparent"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || extracting}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
             >
               {loading ? "Adding..." : "Add Lead"}
